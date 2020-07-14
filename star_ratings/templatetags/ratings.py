@@ -57,3 +57,22 @@ def ratings(context, item, icon_height=app_settings.STAR_RATINGS_STAR_HEIGHT, ic
         'editable': not read_only and (is_authenticated(request.user) or app_settings.STAR_RATINGS_ANONYMOUS),
         'clearable': not read_only and (is_authenticated(request.user) and app_settings.STAR_RATINGS_CLEARABLE)
     }, request=request)
+   
+    
+@register.simple_tag(takes_context=True)
+def ratings_for_book(context, item, icon_height=app_settings.STAR_RATINGS_STAR_HEIGHT, icon_width=app_settings.STAR_RATINGS_STAR_WIDTH, read_only=False, template_name=None):
+    request = context.get('request')
+
+    if request is None:
+        raise Exception('Make sure you have "django.core.context_processors.request" in your templates context processor list')
+
+    rating = get_star_ratings_rating_model().objects.for_instance(item)
+
+
+    # We get the template to load here rather than using inclusion_tag so that the
+    # template name can be passed as a template parameter
+    template_name = template_name or context.get('star_ratings_template_name') or 'star_ratings/book_rating.html'
+    return loader.get_template(template_name).render({
+        'rating': rating,
+        'request': request,
+    }, request=request)
